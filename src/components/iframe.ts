@@ -1,18 +1,26 @@
 import * as m from 'mithril'
 
-const proxy = function(vnode: any){
+function renderIntoIframe(vnode: any) {
+    m.render(vnode.dom.contentDocument.documentElement, vnode.children)
+}
+
+function tryRenderIntoIframe(vnode: any){
     var doc = vnode.dom.contentDocument || vnode.dom.contentWindow.document;
 
     if (doc.readyState === "complete") {
-        m.render( vnode.dom.contentDocument.documentElement, vnode.children )
+        renderIntoIframe(vnode)
     } else{
-        setTimeout(function(){proxy(vnode);},0);
+        doc.addEventListener("readystatechange", (event) => {
+            if (event.target.readyState == 'complete') {
+                renderIntoIframe(vnode)
+            }
+        })
     }
 }
 
-export const Iframe = {
-    oncreate: proxy,
-    onupdate: proxy,
+const Iframe = {
+    oncreate: tryRenderIntoIframe,
+    onupdate: tryRenderIntoIframe,
     view: ({attrs}) =>
         m('iframe', attrs)
 }
